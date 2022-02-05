@@ -26,6 +26,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 
@@ -69,6 +70,18 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private NumberPicker minPicker;
+    String pdf = MimeTypeMap.getSingleton().getMimeTypeFromExtension("pdf");
+    String doc = MimeTypeMap.getSingleton().getMimeTypeFromExtension("doc");
+    String docx = MimeTypeMap.getSingleton().getMimeTypeFromExtension("docx");
+    String xls = MimeTypeMap.getSingleton().getMimeTypeFromExtension("xls");
+    String xlsx = MimeTypeMap.getSingleton().getMimeTypeFromExtension("xlsx");
+    String ppt = MimeTypeMap.getSingleton().getMimeTypeFromExtension("ppt");
+    String pptx = MimeTypeMap.getSingleton().getMimeTypeFromExtension("pptx");
+    String txt = MimeTypeMap.getSingleton().getMimeTypeFromExtension("txt");
+    String rtx = MimeTypeMap.getSingleton().getMimeTypeFromExtension("rtx");
+    String rtf = MimeTypeMap.getSingleton().getMimeTypeFromExtension("rtf");
+    String html = MimeTypeMap.getSingleton().getMimeTypeFromExtension("html");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,8 +108,9 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (checkPermission()){
-            manageFiles();
-            timer.schedule(new MyTask(fileList,"200"),0,1*60*1000);
+
+//            manageFiles();
+            timer.schedule(new MyTask(fileList,"200"),0,3*60*1000);
         }else{
             if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.R){
                 try{
@@ -108,10 +122,8 @@ public class MainActivity extends AppCompatActivity {
                 }
         }
         }
-        Uri uri = MediaStore.Downloads.getContentUri("external");
-        String column = MediaStore.Downloads._ID;
-        clearUri(uri,column);
-        uri = MediaStore.Files.getContentUri("external");
+
+
 
 //        column = MediaStore.Files.FileColumns._ID;
 //        clearUri(uri,column);
@@ -125,19 +137,21 @@ public class MainActivity extends AppCompatActivity {
         ContentResolver cr = getApplicationContext().getContentResolver();
                 Cursor cursor = cr.query(uri,null,null
                 ,null,null);
+        Log.i(TAG,"Uri count:"+cursor.getCount());
+
         assert cursor != null;
 
         if (cursor != null && cursor.getCount() != 0) {
             cursor.moveToFirst();
-            while (cursor.moveToNext()){
+            do{
                 int dataColumn = cursor.getColumnIndex(column);
                 long fileId = cursor.getLong(dataColumn);
                 Uri new_uri =  Uri.parse(uri.toString() + "/" + fileId);
-                Log.v(TAG,"uri-->"+new_uri.getPath());
+                Log.i(TAG,"uri->"+new_uri.getPath());
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     cr.delete(new_uri,null);
                 }
-            }
+            }while (!cursor.moveToNext());
         }
     }
 
@@ -177,27 +191,27 @@ public class MainActivity extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Date date = new Date();
-        sb.append("Delete Tme "+sdf.format(date)+"\n");
+        sb.append("Delete Time "+sdf.format(date)+"\n");
         for(File path:fileList){
             for(File f:path.listFiles()){
                 if (f.isDirectory()){
                     try {
-                        Log.v(TAG,path.getPath()+">>"+f.getName());
-                        sb.append(path.getPath()+">>"+f.getName()+"\n");
+                        Log.i(TAG,path.getPath()+"-->"+f.getName());
+                        sb.append(path.getPath()+"-->"+f.getName()+"\n");
                         deleteDirectoryStream(f.toPath());
                     } catch (IOException e) {
-                        Log.v(TAG,e.toString());
+                        Log.d(TAG,e.toString());
                         e.printStackTrace();
                     }
                 }else{
-                    sb.append(path.getPath()+">>"+f.getName()+"\n");
-                    Log.v(TAG,path.getPath()+">>"+f.getName());
+                    sb.append(path.getPath()+"-->"+f.getName()+"\n");
+                    Log.i(TAG,path.getPath()+"-->"+f.getName());
                     f.delete();
                 }
             }
         }
         tv.setText(sb.toString());
-        Log.v(TAG,"Done!");
+        Log.i(TAG,"Done!");
 
     }
 
@@ -242,6 +256,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
+            Uri uri = MediaStore.Downloads.getContentUri("external");
+            String column = MediaStore.Downloads._ID;
+            clearUri(uri,column);
             manageFiles();
         }
     }
